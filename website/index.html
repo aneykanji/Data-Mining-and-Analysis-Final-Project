@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Sound Classification Final Project</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <h1>
+                ECEN-758 Final Project
+            </h1>
+            <p class="subtitle">
+                Exploring Classification for the UrbanSound8K Dataset
+            </p>
+            <p class="authors">
+                Group 14: Anurag Gade, Aney Kanji, Hasini Kavuru, Nicholas Martin
+            </p>
+            <div class="download-link">
+                <a href="../ECEN_758_Final_Project.pdf" download>
+                    Download Full Report (PDF)
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <article>
+            <section>
+                <h2>
+                    Introduction
+                </h2>
+                <p>
+                    Sound classification is becoming increasingly important in our connected world. From smart home devices that respond to voice commands to security systems that detect unusual noises, the ability to automatically identify different sounds has real-world applications everywhere. This project focuses on classifying urban environmental sounds using deep learning techniques.
+                </p>
+                <p>
+                    We trained a convolutional neural network on the UrbanSound8K dataset, which contains over 8,700 short audio clips of common city sounds. The goal was to build a model that could accurately distinguish between different types of urban noises like car horns, sirens, dog barks, and street music. This kind of technology could be useful for things like smart city infrastructure, noise pollution monitoring, or assistive devices for people with hearing impairments.
+                </p>
+            </section>
+
+            <section>
+                <h2>
+                    The Dataset
+                </h2>
+                <p>
+                    The UrbanSound8K dataset is a well-known benchmark in the audio classification community. It contains 8,732 labeled sound excerpts, each four seconds or less, divided into 10 different classes. The sounds were collected from real urban environments and represent the kinds of noises you might hear walking around a city.
+                </p>
+                <div class="classes">
+                    <h3>
+                        Sound Classes
+                    </h3>
+                    <div class="class-grid">
+                        <span>Air Conditioner</span>
+                        <span>Car Horn</span>
+                        <span>Children Playing</span>
+                        <span>Dog Bark</span>
+                        <span>Drilling</span>
+                        <span>Engine Idling</span>
+                        <span>Gun Shot</span>
+                        <span>Jackhammer</span>
+                        <span>Siren</span>
+                        <span>Street Music</span>
+                    </div>
+                </div>
+                <figure style="text-align: center; margin: 30px 0;">
+                    <img src="images/class_distribution.png" alt="Distribution of Classes" style="max-width: 500px; width: 100%;">
+                </figure>
+                <p>
+                    The dataset is already split into 10 folds for cross-validation purposes. Each fold contains roughly the same number of examples from each class, which helps ensure balanced training. For our project, we used folds 1-8 for training, fold 9 for validation, and fold 10 for final testing.
+                </p>
+            </section>
+
+            <section>
+                <h2>
+                    Preprocessing and Feature Extraction
+                </h2>
+                <p>
+                    Raw audio waveforms are not the best input for neural networks. Instead, we converted each audio clip into a visual representation called a mel-spectrogram. Think of it like a heatmap that shows how the sound's frequency content changes over time. Mel-spectrograms work well because they capture both the pitch and temporal characteristics of sounds in a format that CNNs can process effectively.
+                </p>
+                <div class="details">
+                    <h3>
+                        Technical Details
+                    </h3>
+                    <p>
+                        We used the librosa library to load each audio file at a sampling rate of 22,050 Hz. Each clip was padded or trimmed to exactly 4 seconds to ensure consistent input sizes. We then computed the mel-spectrogram using 128 mel filter banks, an FFT size of 2,048, and a hop length of 512 samples. Finally, we converted the power spectrogram to a decibel scale for better numerical stability during training.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin: 30px 0;">
+                    <figure style="flex: 1; min-width: 250px; max-width: 350px; text-align: center;">
+                        <img src="images/initial_spectrogram.png" alt="Initial Spectrogram" style="width: 100%;">
+                    </figure>
+                    <figure style="flex: 1; min-width: 250px; max-width: 350px; text-align: center;">
+                        <img src="images/power_spectrogram.png" alt="Power converted Spectrogram" style="width: 100%;">
+                    </figure>
+                </div>
+            </section>
+
+            <section>
+                <h2>
+                    Model Architecture
+                </h2>
+                <p>
+                    We designed a convolutional neural network with four convolutional blocks. Each block consists of a Conv2D layer followed by batch normalization, ReLU activation, max pooling, and dropout for regularization. The architecture gradually increases the number of filters from 32 in the first layer to 256 in the final convolutional layer, allowing the network to learn increasingly complex features.
+                </p>
+                <div class="details">
+                    <h3>
+                        Layer Configuration
+                    </h3>
+                    <p>
+                        The input shape is 128x173x1, corresponding to our mel-spectrogram dimensions. The four convolutional blocks use 32, 64, 128, and 256 filters respectively with 3x3 kernels. All convolutions use padding to maintain spatial dimensions before pooling. After the convolutional layers, we apply global average pooling to reduce spatial dimensions. The output is then passed through a fully connected layer with 256 units and a dropout rate of 0.4. The final output layer has 10 units with softmax activation for our 10 classes.
+                    </p>
+                </div>
+                <figure style="text-align: center; margin: 30px 0;">
+                    <img src="images/cnn_architecture.png" alt="CNN Architecture" style="max-width: 700px; width: 100%;">
+                </figure>
+            </section>
+
+            <section>
+                <h2>
+                    Training Process
+                </h2>
+                <p>
+                    We trained the model using the Adam optimizer with an initial learning rate of 0.0001. The loss function was sparse categorical cross-entropy, which computes the negative log likelihood to predict the true labels. Training ran for 50 epochs with a batch size of 32, and we used early stopping to prevent overfitting by monitoring validation loss with a patience of 10 epochs.
+                </p>
+                <p>
+                    One challenge we faced was class imbalance in the dataset. Some sound types had more examples than others, which can cause the model to be biased toward more common classes. We addressed this by calculating class weights and applying them during training, giving more importance to underrepresented classes.
+                </p>
+                <figure style="text-align: center; margin: 30px 0;">
+                    <img src="images/training_accuracy.png" alt="Training and Validation Accuracy" style="max-width: 500px; width: 100%;">
+                </figure>
+            </section>
+
+            <section>
+                <h2>
+                    Results
+                </h2>
+                <p>
+                    Our CNN model achieved an overall test accuracy of 89.4% on the held-out test set. This is a solid result that demonstrates the model learned meaningful patterns in the audio data. Looking at the confusion matrix, we can see that some classes performed better than others.
+                </p>
+                <figure style="text-align: center; margin: 30px 0;">
+                    <img src="images/cnn_statistics.png" alt="CNN Test Data Statistics" style="max-width: 500px; width: 100%;">
+                </figure>
+                <figure style="text-align: center; margin: 30px 0;">
+                    <img src="images/model_comparison.png" alt="Performance Comparison Across Models" style="max-width: 500px; width: 100%;">
+                </figure>
+                <div class="details">
+                    <h3>
+                        Per-Class Performance
+                    </h3>
+                    <p>
+                        The model performed exceptionally well on distinctive sounds like jackhammers (97% precision) and sirens (97% precision). These sounds have very characteristic patterns that make them easy to identify. On the other hand, some classes were more challenging. For example, the model sometimes confused children playing with other classes, achieving only 66% precision for this category. This makes sense since children playing involves varied, irregular sounds that could overlap with street music or other ambient noises.
+                    </p>
+                    <p>
+                        Air conditioners (95% precision) and drilling (95% precision) were classified accurately. The most challenging class turned out to be children playing, which showed the most confusion with other categories. Overall, most classes achieved precision above 88%, demonstrating strong classification performance across the dataset.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin: 30px 0;">
+                    <figure style="flex: 1; min-width: 300px; text-align: center;">
+                        <img src="images/svm_confusion.png" alt="SVM Test Data Confusion Matrix" style="width: 100%;">
+                    </figure>
+                    <figure style="flex: 1; min-width: 300px; text-align: center;">
+                        <img src="images/rf_confusion.png" alt="RF Test Data Confusion Matrix" style="width: 100%;">
+                    </figure>
+                </div>
+            </section>
+
+            <section>
+                <h2>
+                    Comparison with Other Approaches
+                </h2>
+                <p>
+                    To understand how well our CNN performed, we also tested two traditional machine learning approaches: Support Vector Machines and Random Forest classifiers, both trained on mel-spectrogram features. These served as baselines to validate that deep learning was actually providing benefits over simpler methods.
+                </p>
+                <p>
+                    The SVM achieved 83.6% test accuracy, while the Random Forest reached 77.0% test accuracy. Our CNN model's 89.4% accuracy represents a meaningful improvement of about 6 percentage points over the SVM baseline. This confirms that the deep convolutional architecture is better at capturing the complex patterns in audio data compared to traditional classifiers.
+                </p>
+            </section>
+
+            <section>
+                <h2>
+                    Discussion
+                </h2>
+                <p>
+                    The strong performance of our model shows that CNNs can effectively learn to distinguish between different types of urban sounds. The architecture we designed, with its gradual increase in filter complexity, seems well-suited for capturing both low-level audio features and high-level semantic patterns.
+                </p>
+                <p>
+                    One interesting observation from the confusion matrix is that the errors the model makes are often quite reasonable. When it misclassifies a sound, it usually picks a class that a human might also confuse. This suggests the model is learning meaningful acoustic properties rather than just memorizing training examples.
+                </p>
+                <div class="details">
+                    <h3>
+                        Limitations
+                    </h3>
+                    <p>
+                        There are some important limitations to consider. First, the UrbanSound8K clips are relatively clean and well-recorded. In real-world deployment, the model would need to handle noisier audio, overlapping sounds, and varying recording conditions. Second, the 4-second clip length is somewhat artificial. A practical system would need to work with continuous audio streams of arbitrary length.
+                    </p>
+                    <p>
+                        Another consideration is computational requirements. Our model has over 5 million parameters and requires significant memory and processing power, especially during training. For deployment on edge devices or mobile phones, model compression techniques like pruning or quantization would likely be necessary.
+                    </p>
+                </div>
+            </section>
+
+            <section>
+                <h2>
+                    Future Work
+                </h2>
+                <p>
+                    There are several directions we could explore to improve the model further. Data augmentation techniques like time stretching, pitch shifting, and adding background noise could help the model generalize better to diverse acoustic conditions. We could also experiment with more advanced architectures like ResNets or attention mechanisms that have shown promise in audio classification tasks.
+                </p>
+                <p>
+                    Transfer learning is another promising avenue. Starting with a model pretrained on a large audio dataset and fine-tuning it on UrbanSound8K could potentially improve performance, especially for classes with fewer training examples. Additionally, ensemble methods that combine predictions from multiple models often provide more robust results.
+                </p>
+            </section>
+
+            <section>
+                <h2>
+                    Conclusion
+                </h2>
+                <p>
+                    This project demonstrates that deep learning can effectively classify urban environmental sounds. Our CNN model achieved 89.4% accuracy on the UrbanSound8K dataset, outperforming traditional machine learning baselines by a meaningful margin. The model shows good generalization and makes reasonable errors when it does misclassify.
+                </p>
+                <p>
+                    Beyond the technical results, this work highlights the potential for audio classification in real-world applications. From smart city systems that monitor noise pollution to assistive technologies for people with hearing difficulties, the ability to automatically recognize environmental sounds has practical value. As computational resources continue to improve and datasets grow larger, these kinds of models will likely become even more accurate and useful.
+                </p>
+            </section>
+
+            <section>
+                <h2>
+                    References
+                </h2>
+                <ul>
+                    <li>
+                        J. Salamon, C. Jacoby and J. P. Bello. A Dataset and Taxonomy for Urban Sound Research. 22nd ACM International Conference on Multimedia, Orlando USA, Nov. 2014.
+                    </li>
+                    <li>
+                        K. He, X. Zhang, S. Ren and J. Sun. Deep Residual Learning for Image Recognition. IEEE Conference on Computer Vision and Pattern Recognition, 2016.
+                    </li>
+                    <li>
+                        S. Hershey, S. Chaudhuri, D. P. W. Ellis, et al. CNN Architectures for Large-Scale Audio Classification. IEEE International Conference on Acoustics, Speech and Signal Processing, 2017.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="team">
+                <h2>
+                    About the Team
+                </h2>
+                <p>
+                    This project was completed as part of ECEN 758-600 (Data Mining and Analysis) at Texas A&M University during Fall 2025. Our team of four worked together on different aspects of the project, from data preprocessing and model architecture design to training and evaluation.
+                </p>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <p>
+            ECEN 758-600 Final Project | Texas A&M University | Fall 2025
+        </p>
+    </footer>
+</body>
+
+</html>
