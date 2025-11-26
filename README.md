@@ -13,7 +13,6 @@ The notebook will load our saved CNN model and testing arrays, displaying model 
 
 - **[Project Website/Blog](https://data-mining-final-project.vercel.app/)** - Interactive showcase of our work (deployed via Vercel)
 - **[Final Report (PDF)](https://drive.google.com/file/d/1IDW0Kpo6xBZaVxxdwaXaFde1_2vQYPc-/view?usp=sharing)** - Complete project documentation
-- **GitHub Repository** - You're here! Contains all code used for this project
 
 ## Repository Structure
 
